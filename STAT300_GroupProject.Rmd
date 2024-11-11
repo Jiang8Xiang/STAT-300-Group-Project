@@ -7,7 +7,7 @@ output: html_notebook
 ```{r}
 library(MASS)
 library(leaps)
-Car_seat_data <- read.csv("data/carseat.csv")
+Car_seat_data <- read.csv("./carseat.csv")
 set.seed(30012)
 ```
 # Number 1
