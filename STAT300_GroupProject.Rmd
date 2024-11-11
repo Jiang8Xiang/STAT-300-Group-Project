@@ -1,6 +1,6 @@
 ---
 title: "STAT 300 Project"
-author: Xiang Jiang
+author: Xiang Jiang, # Name, # Name
 output: html_notebook
 ---
 
