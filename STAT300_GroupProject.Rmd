@@ -1,0 +1,87 @@
+---
+title: "STAT 300 Project"
+author: Xiang Jiang
+output: html_notebook
+---
+
+```{r}
+library(MASS)
+library(leaps)
+Car_seat_data <- read.csv("/Users/xiangjiang/Desktop/carseat.csv")
+set.seed(30012)
+```
+# Number 1
+```{r}
+trainRec <- sort(sample(1:nrow(Car_seat_data), size = 400))
+testRec <- setdiff(1:nrow(Car_seat_data), trainRec)
+trainSeat <- Car_seat_data[trainRec, ]
+testSeat <- Car_seat_data[testRec, ]
+
+print(dim(trainSeat))
+print(dim(testSeat))
+```
+# Number 2
+```{r}
+full_model <- lm(Sales ~ ., data = trainSeat)
+
+
+forward_model <- step(lm(Sales ~ 1, data = trainSeat), scope = formula(full_model), direction = "forward")
+summary(forward_model)
+
+
+backward_model <- step(full_model, direction = "backward")
+summary(backward_model)
+
+
+best_subset <- regsubsets(Sales ~ ., data = trainSeat, nvmax = ncol(trainSeat) - 1)
+best_subset_summary <- summary(best_subset)
+optimal_model_size <- which.min(best_subset_summary$bic)
+best_model_coefficients <- coef(best_subset, optimal_model_size)
+
+
+forward_model_bic <- step(lm(Sales ~ 1, data = trainSeat), scope = formula(full_model), direction = "forward", k = log(nrow(trainSeat)))
+summary(forward_model_bic)
+
+
+backward_model_bic <- step(full_model, direction = "backward", k = log(nrow(trainSeat)))
+summary(backward_model_bic)
+
+
+best_subset_bic <- regsubsets(Sales ~ ., data = trainSeat, nvmax = ncol(trainSeat) - 1)
+best_subset_bic_summary <- summary(best_subset_bic)
+optimal_bic_model_size <- which.min(best_subset_bic_summary$bic)
+best_bic_model_coefficients <- coef(best_subset_bic, optimal_bic_model_size)
+```
+# Number 3
+$$\hat{Sales}=21.544 + 9.047(ShelveLocGood) + 2.941(ShelveLocMedium) - 0.0782(Price) + 0.0913(Advertising) + 0.0865(Education)$$
+
+* Model 4, selected via BIC, is a simple predictive model focusing on the key variables that influence sales: Price, Advertising, Education, and Shelving Quality. This model is efficient for predictions and effective in guiding decisions on marketing, pricing, and store organization.
+
+# Number 4
+```{r}
+Model_4 <- lm(Sales ~ Price + Education + Advertising + ShelveLoc, data = trainSeat)
+
+test_predictions <- predict(Model_4, newdata = testSeat)
+
+plot(testSeat$Sales, test_predictions, 
+     xlab = "Actual Sales", ylab = "Predicted Sales",
+     main = "Predicted vs. Actual Sales")
+abline(0, 1, col = "red")
+
+residuals <- testSeat$Sales - test_predictions
+
+plot(test_predictions, residuals,
+     xlab = "Predicted Sales", ylab = "Residuals",
+     main = "Residuals vs. Predicted Sales")
+abline(h = 0, col = "blue")
+
+rmse <- sqrt(mean(residuals^2))
+cat("Root Mean Squared Error (RMSE):", rmse, "\n")
+
+testSeat$Predicted_Sales <- test_predictions
+
+boxplot(Sales ~ ShelveLoc, data = testSeat, main = "Actual Sales by Shelving Quality")
+boxplot(Predicted_Sales ~ ShelveLoc, data = testSeat, col = "lightblue", add = TRUE)
+legend("topright", legend = c("Actual Sales", "Predicted Sales"), fill = c("white", "lightblue"))
+```
+
